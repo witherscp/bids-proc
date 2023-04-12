@@ -1,0 +1,14 @@
+{
+    "SamplingFrequency": 20.0,
+    "StartTime": 0.0,
+    "Columns": ["cardiac", "respiratory"],
+    "Manufacturer": "GE HealthCare",
+    "cardiac": {
+        "Description": "continuous pulse measurement",
+        "Units": "mV"
+        },
+    "respiratory": {
+        "Description": "continuous measurements by respiration belt",
+        "Units": "mV"
+        }
+}
