@@ -133,10 +133,10 @@ for subj in "${subj_arr[@]}"; do
                         --raw_session_dir "$raw_session_dir"  \
                         "$subj"
 
-                    # bash $scripts_dir/proc_perf.sh   \
-                    #     --folder_type "$folder_type"  \
-                    #     --raw_session_dir "$raw_session_dir"  \
-                    #     "$subj"
+                    bash $scripts_dir/proc_perf.sh   \
+                        --folder_type "$folder_type"  \
+                        --raw_session_dir "$raw_session_dir"  \
+                        "$subj"
 
                     bash $scripts_dir/proc_rsfmri.sh   \
                         --folder_type "$folder_type"  \
