@@ -68,10 +68,21 @@ if [[ -d $raw_session_dir/3d_asl3.0mm ]] || [[ -d $raw_session_dir/3d_asl3.5mm ]
             mv "$subj_session_perf_dir"/asl_temp_reala.json "$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_asl.json
             cp $scripts_dir/ge_aslcontext.tsv "$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_aslcontext.tsv
 
-            # modify .json file
+            # modify .json files
             json_file="$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_asl.json
             jq '.ArterialSpinLabelingType="PCASL"' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
             jq '.M0Type="Separate"' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+            jq '.BackgroundSuppression=true' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+            jq '.RepetitionTimePreparation=4.7' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+            jq '.VascularCrushing=false' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+            jq '.PulseSequenceDetails="GE product 3DASL sequence"' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+
+            slicemm=${asl_folder:6:3}
+            jq '.AcquisitionVoxelSize=['$slicemm','$slicemm','$slicemm']' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+
+            json_file="$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_m0scan.json
+            jq '.RepetitionTimePreparation=4.7' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
+            jq '.AcquisitionVoxelSize=['$slicemm','$slicemm','$slicemm']' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
         fi
     done
 
