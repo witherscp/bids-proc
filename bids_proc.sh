@@ -6,25 +6,19 @@
 # Author:   	Price Withers
 # Date:     	3/17/23
 
-# Syntax:       ./bids_proc.sh [-h|--help] [-l|--list SUBJ_LIST] [subj1 [subj2 ..]]
-# Arguments:    SUBJ: 		   	   subject code(s)
-# 				-l SUBJ_LIST:      path to list of subjects to process. if given, all positional arguments will be ignored
-# Description:	
-# Requirements:
-
 #====================================================================================================================
 
 # INPUT
 
 # set usage
 function display_usage {
-	echo -e "\033[0;35m++ usage: $0 [-h|--help] [--modality [research | clinical | altclinical]] [-l|--list SUBJ_LIST] [SUBJ [SUBJ ...]] ++\033[0m"
+	echo -e "\033[0;35m++ usage: $0 [-h|--help] [--modality [research | clinical | altclinical | meg]] [-l|--list SUBJ_LIST] [SUBJ [SUBJ ...]] ++\033[0m"
 	exit 1
 }
 
 #set defaults
 subj_list=false;
-proc_research=true; proc_clinical=true; proc_altclinical=true
+proc_research=true; proc_clinical=true; proc_altclinical=true; proc_meg=true
 
 # parse options
 while [ -n "$1" ]; do
@@ -40,11 +34,13 @@ done
 
 # choose which modalities to process
 if [ "$modality" == 'research' ]; then
-    proc_research=true; proc_clinical=false; proc_altclinical=false
+    proc_clinical=false; proc_altclinical=false; proc_meg=false
 elif [ "$modality" == 'clinical' ]; then
-    proc_clinical=false; proc_clinical=true; proc_altclinical=false
+    proc_research=false; proc_altclinical=false; proc_meg=false
 elif [ "$modality" == 'altclinical' ]; then
-    proc_altclinical=false; proc_clinical=false; proc_altclinical=true
+    proc_research=false; proc_clinical=false; proc_meg=false
+elif [ "$modality" == 'meg' ]; then
+    proc_altclinical=false; proc_clinical=false; proc_research=false
 fi
 
 # check if subj_list argument was given; if not, get positional arguments
@@ -78,11 +74,12 @@ case "${unameOut}" in
 						 Exiting... ++\033[0m"; exit 1
 esac
 
-scripts_dir=${NEU_dir}/Users/price/dev/bids-proc
+scripts_dir=${NEU_dir}/Users/price/dev/bids-proc/scripts
 raw_dir="${NEU_dir}/Raw_Data"
 raw_clinical_dir="${raw_dir}/Multicontrast_MRI"
 raw_altclinical_dir="${raw_dir}/Other_MRI"
 raw_research_dir="${raw_dir}/fMRI_DTI"
+raw_meg_dir="${raw_dir}/MEG"
 
 key=${NEU_dir}/Scripts_and_Parameters/14N0061_key
 
@@ -106,12 +103,18 @@ for subj in "${subj_arr[@]}"; do
         fi
     done
 
+    if [[ $subj_name == '' ]]; then
+        echo -e "\033[0;35m++ Subject ${subj} does not exist. ++\033[0m"
+        exit 1
+    fi
+
     # iterate over pre-op and post-op raw folders
     for folder_type in "${folder_arr[@]}"; do
 
         subj_raw_research_dir=${raw_research_dir}/${folder_type}/$subj_name
         subj_raw_clinical_dir=${raw_clinical_dir}/${folder_type}/$subj_name/mri
         subj_raw_altclinical_dir=${raw_altclinical_dir}/${folder_type}/$subj_name
+        subj_raw_meg_dir=${raw_meg_dir}/${folder_type}/$subj_name
 
         ## PROCESS RESEARCH SCANS
         if [[ -d $subj_raw_research_dir ]] && [[ $proc_research == "true" ]]; then
@@ -161,6 +164,14 @@ for subj in "${subj_arr[@]}"; do
             bash $scripts_dir/proc_altclinical_anat.sh \
                 --folder_type "$folder_type" \
                 --subj_name "$subj_name" \
+                "$subj"
+        fi
+
+        ## PROCESS MEG SCANS
+        if [[ -d $subj_raw_meg_dir ]] && [[ $proc_meg == "true" ]]; then
+            
+            bash $scripts_dir/proc_meg.sh \
+                --folder_type "$folder_type" \
                 "$subj"
         fi
     done
