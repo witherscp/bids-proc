@@ -49,6 +49,7 @@ esac
 bids_root="${NEU_dir}/Data"
 fs_dir="${bids_root}"/derivatives/freesurfer-6.0.0
 scripts_dir=${NEU_dir}/Users/price/dev/bids-proc/scripts
+files_dir=${NEU_dir}/Users/price/dev/bids-proc/files
 
 #======================================================================================
 
@@ -72,17 +73,15 @@ fi
 
 fs_subj=${subj_fs_dir##*/}
 
-if [ ! -d $subj_session_meg_dir ]; then
-    mkdir -p $subj_session_meg_dir
-fi
-
-if [ ! -f $subj_session_meg_dir/sub-${subj}_ses-meg_task-resteyesopen_run-1_meg.fif ]; then
+if [ ! -f $subj_session_meg_dir/sub-${subj}_ses-meg_task-resteyesclosed_run-01_meg.fif ]; then
     
     # copy all .ds into meg folder
-    python $scripts_dir/organize_meg.py "$subj"
+    python $scripts_dir/retrieve_meg.py "$subj"
     
     # retrieve emptyroom and convert to bids format
-    python $scripts_dir/retrieve_emptyroom.py "$subj"
+    python $scripts_dir/retrieve_emptyroom.py \
+        --pnum "$subj"  \
+        --files_dir "$files_dir"
     
     # if subject does not have bem files, then run mne_watershed_bem
     if [ ! -f "$subj_fs_dir/bem/inner_skull.surf" ]; then
@@ -90,7 +89,7 @@ if [ ! -f $subj_session_meg_dir/sub-${subj}_ses-meg_task-resteyesopen_run-1_meg.
             -d $fs_dir \
             -s "$fs_subj"
     else
-        echo "Bem surfaces already exist for ${subj}"
+        echo -e "\033[1;33m ++ Bem surfaces already exist for ${subj} ++\033[0m"
     fi
 
     # this line is necessary to allow running afni GUI from python script
@@ -102,7 +101,9 @@ if [ ! -f $subj_session_meg_dir/sub-${subj}_ses-meg_task-resteyesopen_run-1_meg.
         --pnum "$subj"
 
     # convert meg to bids format
-
-    # clean up directory
+    python $scripts_dir/convert_meg.py \
+        --fs_subj "$fs_subj" \
+        --pnum "$subj"  \
+        --files_dir "$files_dir"
 
 fi

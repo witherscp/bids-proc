@@ -7,7 +7,7 @@ Created on Tue Apr 18 2023
 """
 
 from argparse import ArgumentParser
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from pathlib import Path
 import requests
@@ -18,6 +18,7 @@ import sys
 
 import mne.io
 from mne_bids import BIDSPath, write_raw_bids
+import numpy as np
 
 from colors import Colors
 
@@ -83,27 +84,34 @@ def download_and_unzip(url_link, output_dir):
     os.remove((output_dir / tgz_file))
 
 
+def anonymize_date(date, daysback):
+    
+    new_date = datetime.strptime(str(date), "%Y%m%d") - timedelta(daysback)
+    return int(new_date.strftime("%Y%m%d"))
+
 if __name__ == "__main__":
 
     # parse arguments
     purpose = "download emptyroom recording with closest date to subject MEG session"
     parser = ArgumentParser(description=purpose)
-    parser.add_argument("pnum", help="subject p-number")
+    parser.add_argument("--pnum", help="subject p-number")
+    parser.add_argument("--files_dir", help="location of daysback.txt")
 
     args = parser.parse_args()
+    files_dir = Path(args.files_dir)
     pnum = args.pnum
 
     neu_dir = Path("/Volumes/shares/NEU")
     bids_root = neu_dir / 'Data'
     emptyroom_dir = bids_root / 'sub-emptyroom'
-    subj_meg_temp_dir = bids_root / f'sub-{pnum}' / 'temp'
+    subj_source_meg_dir = bids_root / 'sourcedata' / f'sub-{pnum}' / 'ses-meg' / 'meg'
 
     emptyroom_url = "https://kurage.nimh.nih.gov/EmptyRoom/"
     main_urls = retrieve_urls(emptyroom_url)
     possible_dates, possible_urls = retrieve_possibles(main_urls)
 
     goal_date = int(
-        next(subj_meg_temp_dir.glob(f"*_epilepsy_????????_*.ds")).stem.split("_")[2]
+        next(subj_source_meg_dir.glob(f"*_epilepsy_????????_*.ds")).stem.split("_")[2]
     )
 
     best_date = nearest(possible_dates, goal_date)
@@ -135,6 +143,9 @@ if __name__ == "__main__":
                         best_date = best_sub_date
                         best_url = possible_sub_urls[best_sub_idx]
 
+    daysback=int(np.loadtxt((files_dir / 'daysback.txt')))
+    best_date = anonymize_date(best_date, daysback)
+
     # check for existing files
     emptyroom_date_dir = emptyroom_dir / f'ses-{best_date}'
     temp_output_dir = emptyroom_dir / 'temp'
@@ -160,6 +171,7 @@ if __name__ == "__main__":
         directory=ds_list[0],
         preload=False
     )
+    raw.info['line_freq'] = 60
     
     temp_bids_dir = bids_root / 'temp'
     bids_path = BIDSPath(
@@ -168,11 +180,13 @@ if __name__ == "__main__":
         task='noise',
         root=temp_bids_dir
     )
+    
     write_raw_bids(
         raw=raw,
-        bids_path=bids_path
+        bids_path=bids_path,
+        anonymize={'daysback':daysback,'keep_his':False}
     )
-    
+
     temp_ses_dir = temp_bids_dir / f'sub-emptyroom' / f'ses-{best_date}'
     temp_ses_dir.rename(emptyroom_date_dir)
     

@@ -112,7 +112,7 @@ if __name__ == "__main__":
     fs_t1_dir = subj_source_dir / fs_session / 'anat'
 
     # if subject already has -trans.fif, then skip patient
-    trans_file = subj_fs_dir / f"bem/{fs_subj}-trans.fif"
+    trans_file = subj_fs_dir / 'bem' / f"{fs_subj}-trans.fif"
     if trans_file.exists():
         print(Colors.YELLOW, f"++ Trans file already exists for {pnum} ++", Colors.END)
         sys.exit(1)

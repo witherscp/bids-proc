@@ -45,12 +45,11 @@ if __name__ == "__main__":
     subj_name = pnum2name_dict[pnum]
     meg_code = pnum2meg_dict[pnum]
     subj_raw_dir = raw_dir / subj_name
-    subj_temp_dir = bids_root / f'sub-{pnum}' / 'temp'
     subj_source_dir = bids_root / 'sourcedata' / f'sub-{pnum}' / 'ses-meg' / 'meg'
     subj_ctf_dir = ctf_dir / pnum / 'CTF'
     
-    if len(list(subj_temp_dir.glob(f"{meg_code}_epilepsy_????????_*.ds"))) > 0:
-        print(Colors.YELLOW, f"++ {pnum} already has MEG data in {subj_temp_dir}++", Colors.END)
+    if len(list(subj_source_dir.glob(f"{meg_code}_epilepsy_????????_*.ds"))) > 0:
+        print(Colors.YELLOW, f"++ {pnum} already has MEG data in {subj_source_dir}++", Colors.END)
         sys.exit(1)
     
     # iterate through raw session dates
@@ -58,7 +57,7 @@ if __name__ == "__main__":
 
         # move .ds directories into orig dir
         for src_dir in raw_session.glob(f"{meg_code}_epilepsy_????????_*.ds"):
-            shutil.copytree(src_dir, (subj_temp_dir / (src_dir.stem + src_dir.suffix)))
+            shutil.copytree(src_dir, (subj_source_dir / (src_dir.stem + src_dir.suffix)))
 
         # if EEGImpedance files exist, move them into separate directory
         impedance_dir = subj_source_dir / "EEG"
@@ -67,7 +66,7 @@ if __name__ == "__main__":
             shutil.copytree(src_dir, (impedance_dir / (src_dir.stem + src_dir.suffix)))
 
         # unzip .meg4 files in each .ds dir
-        zipped_files = subj_temp_dir.glob("*.ds/*.meg4.bz2")
+        zipped_files = subj_source_dir.glob("*.ds/*.meg4.bz2")
         for zipped_file in zipped_files:
             cmd = shlex.split(f"bzip2 -d {zipped_file}")
             subprocess.run(cmd)
@@ -80,6 +79,6 @@ if __name__ == "__main__":
             )
             for marker_file in marker_files:
                 output_stem = marker_file.parent.stem[:-2] + marker_file.parent.suffix
-                outfile = subj_temp_dir / output_stem / 'MarkerFile.mrk'
+                outfile = subj_source_dir / output_stem / 'MarkerFile.mrk'
                 if not outfile.exists():
-                    shutil.copy(marker_file, (subj_temp_dir / output_stem))
+                    shutil.copy(marker_file, (subj_source_dir / output_stem))
