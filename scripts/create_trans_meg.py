@@ -108,10 +108,11 @@ if __name__ == "__main__":
     subj_fs_dir = fs_dir / fs_subj
     subj_bids_dir = bids_root / f'sub-{pnum}'
     subj_meg_temp_dir = subj_bids_dir / 'temp'
-    fs_t1_dir = subj_bids_dir / fs_session / 'anat'
+    subj_source_dir = bids_root / 'sourcedata' / f'sub-{pnum}'
+    fs_t1_dir = subj_source_dir / fs_session / 'anat'
 
     # if subject already has -trans.fif, then skip patient
-    trans_file = subj_fs_dir / f"bem/{pnum}-trans.fif"
+    trans_file = subj_fs_dir / f"bem/{fs_subj}-trans.fif"
     if trans_file.exists():
         print(Colors.YELLOW, f"++ Trans file already exists for {pnum} ++", Colors.END)
         sys.exit(1)
@@ -155,7 +156,7 @@ if __name__ == "__main__":
 
         # temporarily copy research into clinical directory
         shutil.copy(
-            src=(subj_bids_dir / f'ses-research{ses_suffix}' / 'anat' / f'sub-{pnum}_ses-research{ses_suffix}_rec-axialized_T1w.nii.gz'),
+            src=(subj_source_dir / f'ses-research{ses_suffix}' / 'anat' / f'sub-{pnum}_ses-research{ses_suffix}_rec-axialized_T1w.nii.gz'),
             dst=fs_t1_dir
         )
 
@@ -226,12 +227,19 @@ if __name__ == "__main__":
         # change to subject t1 directory
         os.chdir(fs_t1_dir)
         create_null_tag_file()
-        mri_file = f'{fs_subj}_rec-axialized_T1w.nii.gz'
+        nii_mri_file = f'{fs_subj}_rec-axialized_T1w.nii.gz'
+        mri_file_stem = 't1+orig'
+        # convert scan from .nii.gz to HEAD/BRIK format
+        copy_cmd = shlex.split(f"3dcopy {nii_mri_file} {mri_file_stem}.")
+        subprocess.run(copy_cmd)
 
         # check for fiducial markers in clinical scan and label
         err = view_afni(
-            message="If fiducials are present, open null.tag, reposition labels, save to header, then press return when finished. Otherwise, type 'N' and press return.",
-            underlay=mri_file,
+            message=(f"If fiducials are present, open {mri_file_stem} Dataset, type "
+                     "null.tag in 'Tag File' and click 'Read', reposition labe"
+                     "ls, 'Save' to header, then hit return in terminal when finished. O"
+                     "therwise, type 'N' and press return."),
+            underlay=f'{mri_file_stem}.BRIK',
             plugout=True,
         )
 
@@ -242,7 +250,7 @@ if __name__ == "__main__":
         if err in ["N", "'N'", "n", "'n'"]:
             
             use_clinical=False
-            subj_research_dir = subj_bids_dir / f'ses-research{ses_suffix}' / 'anat'
+            subj_research_dir = subj_source_dir / f'ses-research{ses_suffix}' / 'anat'
             research_scan = f'sub-{pnum}_ses-research{ses_suffix}_rec-axialized_T1w.nii.gz'
             research_scan_path = subj_research_dir / research_scan
 
@@ -258,8 +266,11 @@ if __name__ == "__main__":
 
                 # check for fiducial markers in clinical scan and label
                 err = view_afni(
-                    message="Open null.tag, reposition labels, save to header, then press return when finished. Otherwise, type 'N' and press return.",
-                    underlay=mri_file,
+                    message=(f"If fiducials are present, open {mri_file_stem} Dataset, type "
+                            "null.tag in 'Tag File' and click 'Read', reposition labe"
+                            "ls, 'Save' to header, then hit return in terminal when finished. O"
+                            "therwise, type 'N' and press return."),
+                    underlay=f'{mri_file_stem}.BRIK',
                     plugout=True,
                 )
                 
@@ -294,8 +305,11 @@ if __name__ == "__main__":
 
                     # label clinical scan
                     err = view_afni(
-                        message="Open null.tag, reposition labels, save to header, then press return when finished. Otherwise, type 'N' and press return.",
-                        underlay=mri_file,
+                        message=(f"If fiducials are present, open {mri_file_stem} Dataset, type "
+                                "null.tag in 'Tag File' and click 'Read', reposition labe"
+                                "ls, 'Save' to header, then hit return in terminal when finished. O"
+                                "therwise, type 'N' and press return."),
+                        underlay=f'{mri_file_stem}.BRIK',
                         plugout=True,
                     )
                     
@@ -314,11 +328,11 @@ if __name__ == "__main__":
             # change to research directory
             os.chdir(subj_research_dir)
             
-            # convert scan from .nii to HEAD/BRIK format
+            # convert scan from .nii.gz to HEAD/BRIK format
             copy_cmd = shlex.split(f"3dcopy {research_scan} research+orig.")
             subprocess.run(copy_cmd)
             # move clinical scan into research dir
-            copy_cmd = shlex.split(f"3dcopy {fs_t1_dir / mri_file} clinical+orig.")
+            copy_cmd = shlex.split(f"3dcopy {fs_t1_dir / nii_mri_file} clinical+orig.")
             subprocess.run(copy_cmd)
 
             # Align research T1 to clinical T1
@@ -329,7 +343,7 @@ if __name__ == "__main__":
             subprocess.run(allineate_cmd)
             alignment = view_afni(
                 message="Check alignment, then press return when finished or type 'N' if failed.",
-                underlay=(fs_t1_dir / mri_file),
+                underlay=(fs_t1_dir / nii_mri_file),
                 overlay=f"{aligned_stem}.BRIK",
             )
             if alignment == "N":
@@ -347,7 +361,10 @@ if __name__ == "__main__":
             create_null_tag_file()
 
             view_afni(
-                message="Open null.tag, reposition labels, save to header, then press return when finished.",
+                message=(f"If fiducials are present, open {aligned_stem}.BRIK Dataset, type "
+                        "null.tag in 'Tag File' and click 'Read', reposition labe"
+                        "ls, 'Save' to header, then hit return in terminal when finished. O"
+                        "therwise, type 'N' and press return."),
                 underlay=f"{aligned_stem}.BRIK",
                 plugout=True,
             )
@@ -371,9 +388,13 @@ if __name__ == "__main__":
         else:
             # create -trans.fif file
             trans_cmd = shlex.split(
-                f"calc_mnetrans.py -subjects_dir {fs_dir} -subject {fs_subj} -dsname {ds_dir} -afni_mri {mri_file}"
+                f"calc_mnetrans.py -subjects_dir {fs_dir} -subject {fs_subj} -dsname {ds_dir} -afni_mri {mri_file_stem}.BRIK"
             )
             subprocess.run(trans_cmd)
+            
+        for suff in [".BRIK", ".HEAD"]:
+            delete_file = fs_t1_dir / f'{mri_file_stem}{suff}'
+            os.remove(delete_file)
 
     if trans_file.exists():
         print(Colors.GREEN, f"++ Trans file created for {pnum} ++", Colors.END)
