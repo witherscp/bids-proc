@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import sys
 
-import mne.io
+from mne.io import read_raw_ctf
 from mne_bids import BIDSPath, write_raw_bids
 import numpy as np
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         print(Colors.YELLOW, f"++ {pnum} already has Emptyroom data in {emptyroom_date_dir}++", Colors.END)
         sys.exit(1)
     else:
-        temp_output_dir.mkdir(parents=True)
+        temp_output_dir.mkdir(parents=True, exist_ok=True)
         download_and_unzip(
             url_link=f"{emptyroom_url}{best_url}", 
             output_dir=temp_output_dir
@@ -167,10 +167,17 @@ if __name__ == "__main__":
     
     ## convert files to bids format
     
-    raw = mne.io.read_raw_ctf(
-        directory=ds_list[0],
-        preload=False
-    )
+    try:
+        raw = read_raw_ctf(
+            directory=ds_list[0],
+            preload=False
+        )
+    except OSError:
+        raw = read_raw_ctf(
+            directory=ds_list[0],
+            preload=False,
+            system_clock='ignore'
+        )
     raw.info['line_freq'] = 60
     
     temp_bids_dir = bids_root / 'temp'
