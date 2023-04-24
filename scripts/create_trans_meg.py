@@ -107,8 +107,8 @@ if __name__ == "__main__":
 
     subj_fs_dir = fs_dir / fs_subj
     subj_bids_dir = bids_root / f'sub-{pnum}'
-    subj_meg_temp_dir = subj_bids_dir / 'temp'
     subj_source_dir = bids_root / 'sourcedata' / f'sub-{pnum}'
+    subj_source_meg_dir = subj_source_dir / 'ses-meg' / 'meg'
     fs_t1_dir = subj_source_dir / fs_session / 'anat'
 
     # if subject already has -trans.fif, then skip patient
@@ -118,15 +118,15 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # get path to a .ds folder
-    if not subj_meg_temp_dir.exists():
+    if not subj_source_meg_dir.exists():
         print(
             Colors.RED,
-            f"++ {pnum} does not have MEG data stored in {subj_meg_temp_dir}. ++",
+            f"++ {pnum} does not have MEG data stored in {subj_source_meg_dir}. ++",
             Colors.END,
         )
         sys.exit(1)
     else:
-        ds_dir = next(subj_meg_temp_dir.glob("*.ds"))
+        ds_dir = next(subj_source_meg_dir.glob("*.ds"))
 
     # check whether patient has Brainsight available
     subj_brainsight_dir = meg_dir / f"Brainsight/{pnum}"
@@ -202,7 +202,10 @@ if __name__ == "__main__":
 
         # view transformed dataset open clinical_fiducials.tag to make sure they look good, then save into header
         err = view_afni(
-            message="Check clinical_fiducials.tag, save to header, then press return when finished or type 'N' if failed.",
+            message=(f"Open research_aligned2clinical+orig Dataset, type clinic"
+                    "al_fiducials.tag in 'Tag File' and click 'Read', then che"
+                    "ck that fiducials are correctly positioned. 'Save' to header when finished then press ret"
+                    "urn or type 'N' if failed."),
             underlay='research_aligned2clinical+orig.BRIK',
             plugout=True
         )

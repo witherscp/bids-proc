@@ -28,6 +28,7 @@ case "${unameOut}" in
 esac
 
 files_dir=${NEU_dir}/Users/price/dev/bids-proc/files
+scripts_dir=${NEU_dir}/Users/price/dev/bids-proc/scripts
 bids_root="${NEU_dir}/Data"
 
 #======================================================================================
@@ -57,7 +58,7 @@ if [[ -d $raw_session_dir/3d_asl3.0mm ]] || [[ -d $raw_session_dir/3d_asl3.5mm ]
             dcm2niix_afni -o "$subj_session_perf_dir" -z y -f asl_temp "${raw_session_dir}"/$asl_folder
             
             # reshape 4D NIFTI to avoid bids-validation error
-            python reshape_ge_asl.py \
+            python "${scripts_dir}"/reshape_ge_asl.py \
                 --in_file "$subj_session_perf_dir"/asl_temp_reala.nii.gz    \
                 --out_file "$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_asl.nii.gz
 
