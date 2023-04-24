@@ -27,6 +27,11 @@ case "${unameOut}" in
 						 Exiting... ++\033[0m"; exit 1
 esac
 
+cmd_output=$(which dcm2niix)
+if [ "$cmd_output" == '' ]; then
+	echo -e "\033[0;35m++ Dcm2niix not found. Run \`python -m pip install dcm2niix\` in your active environment. Exiting... ++\033[0m"
+	exit 1
+fi
 
 scripts_dir=${NEU_dir}/Users/price/dev/bids-proc/scripts
 files_dir=${NEU_dir}/Users/price/dev/bids-proc/files
@@ -60,39 +65,51 @@ if [ -d $raw_session_dir/epi_3_mm_forward_blip ]; then
         eyes_open_runs=( epi_3_mm_rest_run_? )
         run_num=0
         for run_name in "${eyes_open_runs[@]}"; do
-            ((run_num+=1))
+            if [ -d "$run_name" ]; then
+                ((run_num+=1))
 
-            # run Vinai's sortme script and dicom2nii conversion
-            raw_func_folder=$raw_session_dir/$run_name
-            python $scripts_dir/sortme.py $raw_func_folder
-
-            for echo_num in 1 2 3; do
-                if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
-                    mv $raw_func_folder/echo_000${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.json
-                    mv $raw_func_folder/echo_000${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
+                # run Vinai's sortme script and dicom2nii conversion
+                raw_func_folder=$raw_session_dir/$run_name
+                if [ -d "$raw_func_folder"/echo_0001 ]; then
+                    python $scripts_dir/sortme.py "$raw_func_folder" 'dcm' 'true'
+                else
+                    python $scripts_dir/sortme.py "$raw_func_folder"
                 fi
-            done
+
+                for echo_num in 1 2 3; do
+                    if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
+                        mv $raw_func_folder/echo_000${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.json
+                        mv $raw_func_folder/echo_000${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
+                    fi
+                done
+            fi
         done
     fi
 
-    # eyes open
+    # eyes closed
     if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-1_echo-1_bold.nii.gz ]; then
         cd "$raw_session_dir" || exit
         eyes_closed_runs=( epi_3_mm_rest_run_?_eyes_closed )
         run_num=0
         for run_name in "${eyes_closed_runs[@]}"; do
-            ((run_num+=1))
+            if [ -d "$run_name" ]; then
+                ((run_num+=1))
 
-            # run Vinai's sortme script and dicom2nii conversion
-            raw_func_folder=$raw_session_dir/$run_name
-            python $scripts_dir/sortme.py $raw_func_folder
-
-            for echo_num in 1 2 3; do
-                if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
-                    mv $raw_func_folder/echo_000${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.json
-                    mv $raw_func_folder/echo_000${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
+                # run Vinai's sortme script and dicom2nii conversion
+                raw_func_folder=$raw_session_dir/$run_name
+                if [ -d "$raw_func_folder"/echo_0001 ]; then
+                    python $scripts_dir/sortme.py "$raw_func_folder" 'dcm' 'true'
+                else
+                    python $scripts_dir/sortme.py "$raw_func_folder"
                 fi
-            done
+
+                for echo_num in 1 2 3; do
+                    if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
+                        mv $raw_func_folder/echo_000${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.json
+                        mv $raw_func_folder/echo_000${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
+                    fi
+                done
+            fi
         done
     fi
 
@@ -112,7 +129,11 @@ if [ -d $raw_session_dir/epi_3_mm_forward_blip ]; then
         if [ ! -f "$subj_session_fmap_dir"/sub-"${subj}"_ses-research${ses_suffix}_dir-${direction}_epi.nii.gz ]; then
             # run Vinai's sortme script and dicom2nii conversion
             raw_fmap_folder=$raw_session_dir/epi_3_mm_${direction}_blip
-            python $scripts_dir/sortme.py $raw_fmap_folder
+            if [ -d "$raw_fmap_folder"/echo_0001 ]; then
+                python $scripts_dir/sortme.py "$raw_fmap_folder" 'dcm' 'true'
+            else
+                python $scripts_dir/sortme.py "$raw_fmap_folder"
+            fi
 
             mv $raw_fmap_folder/echo_0001.json "$subj_session_fmap_dir"/sub-"${subj}"_ses-research${ses_suffix}_dir-${direction}_epi.json
             mv $raw_fmap_folder/echo_0001.nii.gz "$subj_session_fmap_dir"/sub-"${subj}"_ses-research${ses_suffix}_dir-${direction}_epi.nii.gz
@@ -197,40 +218,44 @@ elif [ -d $raw_session_dir/epi_forward ]; then
     eyes_open_runs=( rest_run? )
     run_num=0
     for run_name in "${eyes_open_runs[@]}"; do
-        ((run_num+=1))
-        if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-1_bold.nii.gz ]; then
-            # run dicom2nii conversion
-            dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-1_bold "$run_name"
-        fi
-
-        for echo_num in 2 3; do
-            if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
+        if [ -d "$run_name" ]; then
+            ((run_num+=1))
+            if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-1_bold.nii.gz ]; then
                 # run dicom2nii conversion
-                dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold "$run_name"-e0${echo_num}
-                mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
-                mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.json
+                dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-1_bold "$run_name"
             fi
-        done
+
+            for echo_num in 2 3; do
+                if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
+                    # run dicom2nii conversion
+                    dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold "$run_name"-e0${echo_num}
+                    mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
+                    mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-${echo_num}_bold.json
+                fi
+            done
+        fi
     done
 
     # eyes closed
     eyes_closed_runs=( rest_run?_eyes_closed )
     run_num=0
     for run_name in "${eyes_closed_runs[@]}"; do
-        ((run_num+=1))
-        if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-1_bold.nii.gz ]; then
-            # run dicom2nii conversion
-            dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-1_bold "$run_name"
-        fi
-
-        for echo_num in 2 3; do
-            if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
+        if [ -d "$run_name" ]; then
+            ((run_num+=1))
+            if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-1_bold.nii.gz ]; then
                 # run dicom2nii conversion
-                dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold "$run_name"-e0${echo_num}
-                mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
-                mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.json
+                dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-1_bold "$run_name"
             fi
-        done
+
+            for echo_num in 2 3; do
+                if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz ]; then
+                    # run dicom2nii conversion
+                    dcm2niix_afni -o "$subj_session_func_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold "$run_name"-e0${echo_num}
+                    mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.nii.gz "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.nii.gz
+                    mv "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold_e${echo_num}.json "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-${echo_num}_bold.json
+                fi
+            done
+        fi
     done
 
     # update .json file taskname attributes
