@@ -38,10 +38,9 @@ def get_task_dict_and_sessions(data_dir):
             meg_sessions.append(meg_session)
         except ValueError:
             message = (f"{meg_session} is not a valid directory. It will be ign"
-            "ored and deleted. If you don't want this to happen, then type ctr"
+            "ored. If you don't want this to happen, then type ctr"
             "l-c now. Otherwise, hit the return key.")
             input(f"{Colors.PURPLE} {message} {Colors.END} ")
-            shutil.rmtree((data_dir / meg_session))
             continue
     
     ordered_runs = sorted(runs)
@@ -86,14 +85,22 @@ if __name__ == "__main__":
     files_dir = Path(args.files_dir)
 
     subj_source_meg_dir = bids_root / 'sourcedata' / f'sub-{pnum}' / 'ses-meg' / 'meg'
-    temp_bids_root = bids_root / 'temp'
     subj_fs_dir = fs_dir / fs_subj
+    temp_bids_root = bids_root / f'temp_{pnum}'
+    
+    trans_file = subj_fs_dir / 'bem' / f"{fs_subj}-trans.fif"
+    if not trans_file.is_file():
+        print(
+            Colors.RED,
+            f"++ {pnum} does not have trans file created. ++",
+            Colors.END,
+        )
+        sys.exit(1)
+    trans = read_trans(trans_file)
     
     run2task_dict, meg_sessions = get_task_dict_and_sessions(subj_source_meg_dir)
     n_eyesopen, n_eyesclosed = 1,1
     
-    trans_file = subj_fs_dir / 'bem' / f"{fs_subj}-trans.fif"
-    trans = read_trans(trans_file)
     mri_path = BIDSPath(
         subject=pnum,
         session=fs_session,
@@ -205,7 +212,7 @@ if __name__ == "__main__":
     # delete unnecessary entries
     json_file = BIDSPath(
         root=temp_bids_root,
-        subject='p00ac',
+        subject=pnum,
         session='meg',
         datatype='meg',
         extension='.json',
