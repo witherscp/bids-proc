@@ -86,45 +86,4 @@ if [[ -d $raw_session_dir/3d_asl3.0mm ]] || [[ -d $raw_session_dir/3d_asl3.5mm ]
             jq '.AcquisitionVoxelSize=['$slicemm','$slicemm','$slicemm']' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
         fi
     done
-
-# # check for existence of SIEMENS DTI directory structure
-# elif [ -d $raw_session_dir/nih_diff_2mm_45vol ]; then
-
-#     all_files=$(find "$raw_session_dir"/nih_diff_2mm_45vol -iname "*.dcm" | wc -l | xargs)
-#     if [ "$all_files" != 7200 ]; then
-#         exit
-#     fi
-
-#     if [ ! -d $subj_session_perf_dir ]; then
-#         mkdir -p $subj_session_perf_dir
-#     fi
-
-#     scanner=Siemens
-
-#     for direction in "up" "down"; do
-#         if [ ! -f "$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-${scanner}_dir-${direction}_dwi.nii.gz ]; then
-#             # move files to temporary folder
-#             mkdir "$subj_session_perf_dir"/temp
-
-#             if [ $direction == 'up' ]; then
-#                 for i in "${raw_session_dir}"/nih_diff_2mm_45vol/*-?????.dcm; do ln -s "$i" "$subj_session_perf_dir"/temp; done
-#                 cp "${raw_session_dir}"/nih_diff_2mm_45vol/README-Series.txt "$subj_session_perf_dir"/temp
-#             else
-#                 for i in "${raw_session_dir}"/nih_diff_2mm_45vol/*-?????_v*2.dcm; do ln -s "$i" "$subj_session_perf_dir"/temp; done
-#                 cp "${raw_session_dir}"/nih_diff_2mm_45vol/README-Series_v*2.txt "$subj_session_perf_dir"/temp
-#             fi
-
-#             # convert dicom to nifti
-#             dcm2niix_afni -o "$subj_session_perf_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_acq-${scanner}_dir-${direction}_dwi "$subj_session_perf_dir"/temp
-        
-#             # clean directory
-#             rm -rf "$subj_session_perf_dir"/temp
-#             rm -f $subj_session_perf_dir/*.bv??
-#         fi
-#     done
-
-#     # manually override phase encoding direction in siemens blip up .json sidecar
-#     json_file="$subj_session_perf_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-${scanner}_dir-up_dwi.json
-#     jq '.PhaseEncodingDirection="j"' "$json_file" > "${json_file}".tmp && mv "${json_file}".tmp "$json_file"
-
 fi
