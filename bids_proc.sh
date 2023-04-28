@@ -175,4 +175,8 @@ for subj in "${subj_arr[@]}"; do
                 "$subj"
         fi
     done
+
+    # UPDATE PARTICIPANTS.TSV
+    python $scripts_dir/update_participants.py "$subj"
+
 done
