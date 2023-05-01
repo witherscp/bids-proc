@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import shutil
 import sys
+from datetime import datetime
 
 from mne import read_trans
 from mne.io import read_raw_ctf
@@ -67,7 +68,15 @@ def get_task_dict_and_sessions(data_dir):
                 task_dict[run] = task_val
 
     return task_dict, meg_sessions
+
+def update_daysback(current_date, new_date=19050101):
     
+    date_a = datetime.strptime(str(current_date), "%Y%m%d")
+    date_b = datetime.strptime(str(new_date), "%Y%m%d")
+    
+    difference = date_a - date_b
+
+    return difference.days
 
 if __name__ == "__main__":
 
@@ -191,6 +200,11 @@ if __name__ == "__main__":
         # remove events from bids file
         raw.set_annotations(None)
         raw.info['line_freq'] = 60.0
+        
+        if ses_date < 19050101:
+            daysback = update_daysback(
+                current_date=int(meg_session.stem.split('_')[2])
+            )
         write_raw_bids(
             raw=raw,
             bids_path=bids_path,
