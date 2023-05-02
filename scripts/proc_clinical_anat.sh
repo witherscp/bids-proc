@@ -86,7 +86,7 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
     mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T1w.nii.gz "$subj_source_anat_dir"
     mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz
     rm sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp_12dof.param.1D
-
+    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz "$subj_source_anat_dir"
 fi
 
 # anat t2 dicom to nifti
@@ -107,7 +107,7 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
         -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz
 
     3dcalc \
-        -a sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+        -a "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
         -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz     \
         -expr 'iszero(a)*b' \
         -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz
@@ -135,7 +135,7 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
         -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz
 
     3dcalc \
-        -a sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+        -a "$subj_source_anat_dir"sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
         -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz     \
         -expr 'iszero(a)*b' \
         -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
@@ -143,8 +143,4 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
     # clean directory
     mv sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.nii.gz "$subj_source_anat_dir"
     mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
-fi
-
-if [ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]; then
-    rm "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz
 fi

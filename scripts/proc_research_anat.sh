@@ -92,6 +92,7 @@ if [ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-a
     mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w.nii.gz
     mv sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz
     rm sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp_12dof.param.1D
+    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz "$subj_source_anat_dir"
 fi
 
 # anat t2_fatsat dicom to nifti
@@ -112,7 +113,7 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-
         -prefix sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz
 
     3dcalc \
-        -a sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+        -a "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
         -b sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz     \
         -expr 'iszero(a)*b' \
         -prefix sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz
@@ -120,8 +121,4 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-
     # clean directory
     mv sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.nii.gz "$subj_source_anat_dir"
     mv sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz
-fi
-
-if [ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz ]; then
-    rm "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz
 fi
