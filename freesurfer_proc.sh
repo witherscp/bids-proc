@@ -57,7 +57,7 @@ case "${unameOut}" in
 						 Exiting... ++\033[0m"; exit 1
 esac
 
-if [[ "$unameOut" == 'Darwin*' ]]; then
+if [[ "$NEU_dir" == "/Volumes/Shares/NEU" ]]; then
 	echo -e "\033[0;35m++ Are you sure that you want to run recon-all on Mac OS? Enter y if yes, anything else if not. ++\033[0m"
 	read -r ynresponse
 	ynresponse=$(echo "$ynresponse" | tr '[:upper:]' '[:lower:]')
