@@ -52,9 +52,21 @@ fi
 unameOut="$(uname -s)"
 case "${unameOut}" in
     Linux*)     NEU_dir="/shares/NEU";;
-    *)          echo -e "\033[0;35m++ Unrecognized OS. Please run Freesurfer on Linux.\
+	Darwin*)    NEU_dir="/Volumes/Shares/NEU";;
+    *)          echo -e "\033[0;35m++ Unrecognized OS. Must be either Linux or Mac OS in order to run script.\
 						 Exiting... ++\033[0m"; exit 1
 esac
+
+if [[ "$unameOut" == 'Darwin*' ]]; then
+	echo -e "\033[0;35m++ Are you sure that you want to run recon-all on Mac OS? Enter y if yes, anything else if not. ++\033[0m"
+	read -r ynresponse
+	ynresponse=$(echo "$ynresponse" | tr '[:upper:]' '[:lower:]')
+
+	if [[ "$ynresponse" != 'y' ]]; then
+		echo -e "\033[0;35m++ Run in Linux. Exiting... ++\033[0m"
+		exit 1
+	fi
+fi
 
 bids_root="${NEU_dir}/Data"
 derivatives_dir="${bids_root}/derivatives"
