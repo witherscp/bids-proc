@@ -52,11 +52,11 @@ if [ ! -d $subj_source_anat_dir ]; then
 fi
 
 
-if [ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_pure ]; then
+if [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_pure ]] || [[ -d "${raw_session_dir}"/t2fatsat_17mm ]]; then
     t1_raw_folder=anat_t1w_mp_rage_1mm_pure
     t1_raw_suffix=""
     t2_raw_folder=t2fatsat_17mm
-elif [ -d "${raw_session_dir}"/t1_memprage-e02 ]; then
+elif [[ -d "${raw_session_dir}"/t1_memprage-e02 ]] || [[ -d "${raw_session_dir}"/t2_ax_fatsat_1mm ]]; then
     t1_raw_folder=t1_memprage-e02
     t1_raw_suffix=_e2
     t2_raw_folder=t2_ax_fatsat_1mm
