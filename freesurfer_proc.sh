@@ -35,6 +35,17 @@ fi
 
 #---------------------------------------------------------------------------------------------------------------------
 
+# VARIABLES
+
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)     NEU_dir="/shares/NEU";;
+    *)          echo -e "\033[0;35m++ Unrecognized OS. Must be Linux in order to run script.\
+						 Exiting... ++\033[0m"; exit 1
+esac
+
+#---------------------------------------------------------------------------------------------------------------------
+
 # SYSTEM CHECK
 
 my_version=$(recon-all -version)
@@ -47,30 +58,10 @@ fi
 
 #---------------------------------------------------------------------------------------------------------------------
 
-# VARIABLES
-
-unameOut="$(uname -s)"
-case "${unameOut}" in
-    Linux*)     NEU_dir="/shares/NEU";;
-	Darwin*)    NEU_dir="/Volumes/Shares/NEU";;
-    *)          echo -e "\033[0;35m++ Unrecognized OS. Must be either Linux or Mac OS in order to run script.\
-						 Exiting... ++\033[0m"; exit 1
-esac
-
-if [[ "$NEU_dir" == "/Volumes/Shares/NEU" ]]; then
-	echo -e "\033[0;35m++ Are you sure that you want to run recon-all on Mac OS? Enter y if yes, anything else if not. ++\033[0m"
-	read -r ynresponse
-	ynresponse=$(echo "$ynresponse" | tr '[:upper:]' '[:lower:]')
-
-	if [[ "$ynresponse" != 'y' ]]; then
-		echo -e "\033[0;35m++ Run in Linux. Exiting... ++\033[0m"
-		exit 1
-	fi
-fi
-
 bids_root="${NEU_dir}/Data"
 derivatives_dir="${bids_root}/derivatives"
 fs_dir="${derivatives_dir}/freesurfer-${version}"
+registration_qc_dir="$bids_root/derivatives/registration_qc/"
 
 # set variables based on postop flag
 if [ $postop = true ]; then
@@ -81,12 +72,37 @@ fi
 
 session=clinical${session_suffix}
 
-if [ ! -d $bids_root/sub-$subj/ses-$session/anat ]; then
+if [[ ! -d $bids_root/sub-"$subj"/ses-$session/anat ]]; then
     session=altclinical${session_suffix}
-    if [ ! -d $bids_root/sub-$subj/ses-$session/anat ]; then
-        echo -e "\033[0;35m++ Subject does not have ses-clinical${session_suffix} necessary to run Freesurfer. ++\033[0m"
+    if [[ ! -d $bids_root/sub-"$subj"/ses-$session/anat ]]; then
+        echo -e "\033[0;35m++ Subject does not have ses-clinical${session_suffix} or ses-altclinical${session_suffix} necessary to run Freesurfer. ++\033[0m"
         exit 1
     fi
+fi
+
+subj_qc_dir=$registration_qc_dir/sub-${subj}
+qc_output_file="$subj_qc_dir"/qc_output.txt
+if [[ ! -f $qc_output_file ]]; then
+	echo -e "\033[0;35m++ Subject does not have registration qc output file. Please run bids_qc.sh to check whether registration succeeded. Exiting... ++\033[0m"
+    exit 1
+else
+	ses_status=''
+	for line in $(cat $qc_output_file); do
+        if [[ $line == ses-$session=* ]]; then
+            ses_status=$(echo "${line#*'='}" | tr -d '\r' 2>&1)
+			break
+        fi
+    done
+	
+	if [[ $ses_status == 'success' ]]; then
+		echo -e "\033[0;32m++ Subject registration was a success. Continuing with Freesurfer... ++\033[0m"
+	elif [[ $ses_status == 'failure' ]]; then
+		echo -e "\033[0;35m++ $subj registration failed for ses-$session. Please fix registration before running Freesurfer. Exiting... ++\033[0m"
+    	exit 1
+	elif [[ $ses_status == '' ]]; then
+		echo -e "\033[0;35m++ $subj does not have registration qc output for ses-$session. Please run bids_qc.sh again to check whether registration succeeded. Exiting... ++\033[0m"
+    	exit 1
+	fi
 fi
 #---------------------------------------------------------------------------------------------------------------------
 
