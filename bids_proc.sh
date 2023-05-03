@@ -83,7 +83,48 @@ raw_meg_dir="${raw_dir}/MEG"
 
 key=${NEU_dir}/Scripts_and_Parameters/14N0061_key
 
-#======================================================================================
+#--------------------------------------------------------------------------------------------------------------------
+
+# REQUIREMENT CHECK
+
+cmd_output=$(which afni)
+if [ "$cmd_output" == '' ]; then
+	echo -e "\033[0;35m++ AFNI not found. Exiting... ++\033[0m"
+	exit 1
+fi
+
+if [[ $proc_research == 'true' ]]; then
+    cmd_output=$(pip list | grep dcm2niix)
+    if [ "$cmd_output" == '' ]; then
+        echo -e "\033[0;35m++ Dcm2niix not found. Run \`pip install dcm2niix\` in your mne environment. Exiting... ++\033[0m"
+        exit 1
+    fi
+fi
+
+if [[ $proc_meg == 'true' ]]; then
+    cmd_output=$(pip list | grep mne)
+    if [ "$cmd_output" == '' ]; then
+        echo -e "\033[0;35m++ MNE-Python package not found. Check that your mne environment is active or install using https://mne.tools/stable/install/manual_install.html#manual-install. Exiting... ++\033[0m"
+        exit 1
+    fi
+    cmd_output=$(which calc_mnetrans.py)
+    if [ "$cmd_output" == '' ]; then
+        echo -e "\033[0;35m++ calc_mnetrans.py not found. Check that your mne environment is active or install with \`pip install git+https://github.com/nih-megcore/nih_to_mne\`. Exiting... ++\033[0m"
+        exit 1
+    fi
+    cmd_output=$(pip list | grep beautifulsoup4)
+    if [ "$cmd_output" == '' ]; then
+        echo -e "\033[0;35m++ BeautifulSoup module not installed. Run \`pip install beautifulsoup4\` in mne environment, then re-run script. Exiting... ++\033[0m"
+        exit 1
+    fi
+    cmd_output=$(pip list | grep mne-bids)
+    if [ "$cmd_output" == '' ]; then
+        echo -e "\033[0;35m++ Mne-Bids not found. Run \`pip install mne-bids\` in your mne environment. Exiting... ++\033[0m"
+        exit 1
+    fi
+fi
+
+#--------------------------------------------------------------------------------------------------------------------
 
 # iterate through subjects
 for subj in "${subj_arr[@]}"; do
@@ -105,7 +146,7 @@ for subj in "${subj_arr[@]}"; do
 
     if [[ $subj_name == '' ]]; then
         echo -e "\033[0;35m++ Subject ${subj} does not exist. ++\033[0m"
-        exit 1
+        continue
     fi
 
     # iterate over pre-op and post-op raw folders
