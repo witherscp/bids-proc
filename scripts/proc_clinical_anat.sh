@@ -135,7 +135,7 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
         -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz
 
     3dcalc \
-        -a "$subj_source_anat_dir"sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+        -a "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
         -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz     \
         -expr 'iszero(a)*b' \
         -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
