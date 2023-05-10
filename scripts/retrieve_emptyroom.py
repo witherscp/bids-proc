@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     # check for existing files
     emptyroom_date_dir = emptyroom_dir / f'ses-{best_date}'
-    temp_output_dir = emptyroom_dir / 'temp'
+    temp_output_dir = emptyroom_dir / f'temp_{best_date}'
     if emptyroom_date_dir.exists():
         print(Colors.YELLOW, f"++ {pnum} already has Emptyroom data in {emptyroom_date_dir}++", Colors.END)
         sys.exit(1)
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         )
     raw.info['line_freq'] = 60
     
-    temp_bids_dir = bids_root / 'temp'
+    temp_bids_dir = bids_root / f'temp_{best_date}'
     bids_path = BIDSPath(
         subject='emptyroom',
         session=str(best_date),
