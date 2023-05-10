@@ -30,18 +30,16 @@ fs_dir = bids_root / 'derivatives' / 'freesurfer-6.0.0'
 def get_task_dict_and_sessions(data_dir):
     
     runs = []
-    meg_sessions = []
     
     for meg_session in [d for d in data_dir.iterdir() if d.is_dir()]:
         try:
             run = int(meg_session.stem[-2:])
             runs.append(run)
-            meg_sessions.append(meg_session)
         except ValueError:
             message = (f"{meg_session} is not a valid directory. It will be ign"
             "ored. If you don't want this to happen, then type ctr"
             "l-c now. Otherwise, hit the return key.")
-            input(f"{Colors.PURPLE} {message} {Colors.END} ")
+            input(f"{Colors.PURPLE} {message} {Colors.END}")
             continue
     
     ordered_runs = sorted(runs)
@@ -56,7 +54,7 @@ def get_task_dict_and_sessions(data_dir):
     for run,task in task_dict.items():
         print(f'Run {run}: {task}')
     
-    resp = input('Everything look OK? Enter n if not, otherwise hit return.\n')
+    resp = input(f'{Colors.PURPLE} Everything look OK? Enter n if not, otherwise hit return.\n {Colors.END}')
     if resp in ["N","n","'n'","'N'"]:
         print('Please type in the correct task for each run (resteyesopen / resteyesclosed).')
         for run in task_dict.keys():
@@ -67,7 +65,12 @@ def get_task_dict_and_sessions(data_dir):
             else:
                 task_dict[run] = task_val
 
-    return task_dict, meg_sessions
+    final_runs = sorted([k for k,v in task_dict.items() if v == 'resteyesopen'])
+    closed_runs = sorted([k for k,v in task_dict.items() if v == 'resteyesclosed'])
+    for r in closed_runs:
+        final_runs.append(r)
+
+    return task_dict, final_runs
 
 def update_daysback(current_date, new_date=19050101):
     
@@ -97,6 +100,9 @@ if __name__ == "__main__":
     subj_fs_dir = fs_dir / fs_subj
     temp_bids_root = bids_root / f'temp_{pnum}'
     
+    if temp_bids_root.is_dir():
+        shutil.rmtree(temp_bids_root)
+    
     trans_file = subj_fs_dir / 'bem' / f"{fs_subj}-trans.fif"
     if not trans_file.is_file():
         print(
@@ -107,7 +113,11 @@ if __name__ == "__main__":
         sys.exit(1)
     trans = read_trans(trans_file)
     
-    run2task_dict, meg_sessions = get_task_dict_and_sessions(subj_source_meg_dir)
+    key_file = subj_source_meg_dir / 'source_to_bids_key.txt'
+    if key_file.is_file():
+        key_file.unlink()
+    
+    run2task_dict, final_runs = get_task_dict_and_sessions(subj_source_meg_dir)
     n_eyesopen, n_eyesclosed = 1,1
     
     mri_path = BIDSPath(
@@ -134,10 +144,11 @@ if __name__ == "__main__":
     }
     
     # iterate through raw session dates
-    for i,meg_session in enumerate(meg_sessions):
+    i = 0
+    for meg_run in final_runs:
 
         # set bids path
-        meg_run = int(meg_session.stem[-2:])
+        meg_session = next(subj_source_meg_dir.glob(f'????????_epilepsy_????????_*{meg_run}.ds'))
         task = run2task_dict[meg_run]
         
         bids_path = BIDSPath(
@@ -166,6 +177,18 @@ if __name__ == "__main__":
                 preload=False,
                 system_clock='ignore'
             )
+        except RuntimeError as e:
+            if "HPI information not available" in e.args[0]:
+                if task == 'resteyesopen':
+                    print(
+                        Colors.RED,
+                        f'Error reading the CTF dataset {meg_session.stem}. Since this was marked as resting state eyes open, all later .ds task markings (eyes open vs. closed) may be wrong. Exiting ...',
+                        Colors.END
+                    )
+                    sys.exit(1)
+                elif task == 'resteyesclosed':
+                    n_eyesclosed-=1
+                continue
         
         # update mri landmarks and retrieve emptyroom path for first run only
         if i==0:
@@ -196,6 +219,7 @@ if __name__ == "__main__":
             ).fpath)
             
             final_er_path = nearest_er_fpath.split(bids_root.stem)[1][1:]
+            i+=1
         
         # remove events from bids file
         raw.set_annotations(None)
@@ -222,6 +246,12 @@ if __name__ == "__main__":
                 'TaskName':task_w_spaces_dict[task]
             }
         )
+        
+        with open(key_file, 'a') as f:
+            if task == 'resteyesopen':
+                f.write(f'{meg_session.stem}, task: {task}, run: {n_eyesopen-1}\n')
+            elif task == 'resteyesclosed':
+                f.write(f'{meg_session.stem}, task: {task}, run: {n_eyesclosed-1}\n')
         
     # delete unnecessary entries
     json_file = BIDSPath(
