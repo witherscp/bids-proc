@@ -227,7 +227,7 @@ elif [[ -d $raw_session_dir/epi_forward ]] && [[ -d $raw_session_dir/epi_reverse
     eyes_open_runs=( rest_run? )
     run_num=0
     for run_name in "${eyes_open_runs[@]}"; do
-        if [ -d "$run_name" ]; then
+        if [[ -d "$run_name" ]] && [[ -d "${run_name}-e02" ]] && [[ -d "${run_name}-e03" ]]; then
             ((run_num+=1))
             if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesopen_run-"${run_num}"_echo-1_bold.nii.gz ]; then
                 # run dicom2nii conversion
@@ -250,7 +250,7 @@ elif [[ -d $raw_session_dir/epi_forward ]] && [[ -d $raw_session_dir/epi_reverse
     eyes_closed_runs=( rest_run?_eyes_closed )
     run_num=0
     for run_name in "${eyes_closed_runs[@]}"; do
-        if [ -d "$run_name" ]; then
+        if [[ -d "$run_name" ]] && [[ -d "${run_name}-e02" ]] && [[ -d "${run_name}-e03" ]]; then
             ((run_num+=1))
             if [ ! -f "$subj_session_func_dir"/sub-"${subj}"_ses-research${ses_suffix}_task-resteyesclosed_run-"${run_num}"_echo-1_bold.nii.gz ]; then
                 # run dicom2nii conversion
