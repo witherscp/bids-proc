@@ -144,9 +144,15 @@ if __name__ == "__main__":
     if brainsight_used:
         # patient has Brainsight completed
         electrodes_path = subj_brainsight_dir / "Exported_Electrodes.txt"
-        trans_cmd = shlex.split(
-            f"calc_mnetrans.py -subjects_dir {fs_dir} -subject {fs_subj} -dsname {ds_dir} -elec_txt {electrodes_path}"
-        )
+        if electrodes_path.is_file():
+            trans_cmd = shlex.split(
+                f"calc_mnetrans.py -subjects_dir {fs_dir} -subject {fs_subj} -dsname {ds_dir} -elec_txt {electrodes_path}"
+            )
+        else:
+            electrodes_path = subj_brainsight_dir / "Exported_Electrodes.tag"
+            trans_cmd = shlex.split(
+                f"calc_mnetrans.py -subjects_dir {fs_dir} -subject {fs_subj} -dsname {ds_dir} -tagfile {electrodes_path}"
+            )
         subprocess.run(trans_cmd)
 
     elif research_brainsight_used:
