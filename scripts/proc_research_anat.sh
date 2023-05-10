@@ -60,6 +60,9 @@ elif [[ -d "${raw_session_dir}"/t1_memprage-e02 ]] || [[ -d "${raw_session_dir}"
     t1_raw_folder=t1_memprage-e02
     t1_raw_suffix=_e2
     t2_raw_folder=t2_ax_fatsat_1mm
+else
+    echo -e "\033[0;35m++ $subj does not have any recognized t1 or t2 directory in $raw_session_dir Exiting... ++\033[0m"
+    exit 1
 fi
 
 # anat t1 dicom to nifti
