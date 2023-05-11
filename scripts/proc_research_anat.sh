@@ -62,6 +62,9 @@ if [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_pure ]]; then
 elif [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_abcd ]]; then
     t1_raw_folder=anat_t1w_mp_rage_1mm_abcd
     t1_raw_suffix=""
+elif [[ -d "${raw_session_dir}"/orig_anat_t1w_mp_rage_1mm_pure ]]; then
+    t1_raw_folder=orig_anat_t1w_mp_rage_1mm_pure
+    t1_raw_suffix=""
 elif [[ -d "${raw_session_dir}"/t1_memprage-e02 ]]; then
     t1_raw_folder=t1_memprage-e02
     t1_raw_suffix=_e2
@@ -80,7 +83,7 @@ if [[ $t1_raw_folder == 'default' ]] && [[ $t2_raw_folder == 'default' ]]; then
 fi
 
 # anat t1 dicom to nifti
-if [ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz ]; then
+if [ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz ] && [[ -d "${raw_session_dir}"/"$t1_raw_folder" ]]; then
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_T1w "${raw_session_dir}"/"$t1_raw_folder"
 
@@ -118,13 +121,14 @@ if [ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-a
     fi
 fi
 
-if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz ]] && [[ $t2_raw_folder != 'default' ]]; then
-    echo -e "\033[0;35m++ $subj ses-research${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
-    exit 1
-fi
-
 # anat t2_fatsat dicom to nifti
 if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz ]] && [[ -d "${raw_session_dir}"/"$t2_raw_folder" ]]; then
+
+    if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
+        echo -e "\033[0;35m++ $subj ses-research${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
+        exit 1
+    fi
+
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w "${raw_session_dir}"/"${t2_raw_folder}"
 

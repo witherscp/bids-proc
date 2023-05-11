@@ -95,12 +95,13 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
     fi
 fi
 
-if [[ -d "${subj_raw_clinical_dir}"/t2 ]] && [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
-    echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
-fi
-
 # anat t2 dicom to nifti
 if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz ]] && [[ -d "${subj_raw_clinical_dir}"/t2 ]]; then
+
+    if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
+        echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
+    fi
+
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-clinical${ses_suffix}_T2w "${subj_raw_clinical_dir}"/t2
 
@@ -133,12 +134,13 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
     fi
 fi
 
-if [[ -d "${subj_raw_clinical_dir}"/flair ]] && [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
-    echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} FLAIR will not be converted to BIDS because T1 conversion failed. ++\033[0m"
-fi
-
 # anat flair dicom to nifti
 if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz ]] && [[ -d "${subj_raw_clinical_dir}"/flair ]]; then
+
+    if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
+        echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} FLAIR will not be converted to BIDS because T1 conversion failed. ++\033[0m"
+    fi
+
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR "${subj_raw_clinical_dir}"/flair
 
