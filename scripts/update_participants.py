@@ -94,6 +94,9 @@ if __name__ == "__main__":
     else:
         is_new_subject = True
         old_dict = new_dict.copy()
+        
+    new_dict['sex'] = old_dict['sex']
+    new_dict['handedness'] = old_dict['handedness']
     
     val_options_dict = {
         'sex': [('M','F','n/a'),'M, F, n/a if unknown'],
