@@ -52,8 +52,8 @@ if [ ! -d $subj_source_anat_dir ]; then
 fi
 
 # set defaults
-t1_raw_folder=''
-t2_raw_folder=''
+t1_raw_folder='default'
+t2_raw_folder='default'
 
 # check for t1 paths
 if [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_pure ]]; then
@@ -74,7 +74,7 @@ elif [[ -d "${raw_session_dir}"/t2_ax_fatsat_1mm ]]; then
     t2_raw_folder=t2_ax_fatsat_1mm
 fi
 
-if [[ $t1_raw_folder == '' ]] && [[ $t2_raw_folder == '' ]]; then
+if [[ $t1_raw_folder == 'default' ]] && [[ $t2_raw_folder == 'default' ]]; then
     echo -e "\033[0;35m++ $subj does not have any recognized t1 or t2 directory in $raw_session_dir Exiting... ++\033[0m"
     exit 1
 fi
@@ -118,7 +118,7 @@ if [ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-a
     fi
 fi
 
-if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz ]] && [[ $t2_raw_folder != '' ]]; then
+if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz ]] && [[ $t2_raw_folder != 'default' ]]; then
     echo -e "\033[0;35m++ $subj ses-research${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
     exit 1
 fi
