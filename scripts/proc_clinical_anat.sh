@@ -60,87 +60,113 @@ if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-
 
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-clinical${ses_suffix}_T1w "${subj_raw_clinical_dir}"/mprage
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T1w.json "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.json
 
-    cd "$subj_session_anat_dir" || exit
+    # check that conversion worked
+    if [[ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T1w.json ]]; then
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T1w.json "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.json
 
-    # axialize t1 nifti
-    fat_proc_axialize_anat                                                  \
-        -inset   sub-"${subj}"_ses-clinical${ses_suffix}_T1w.nii.gz           \
-        -refset  ${files_dir}/TT_N27+tlrc                 \
-        -prefix  sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp    \
-        -mode_t1w         							             \
-        -extra_al_inps "-nomask"					             \
-        -focus_by_ss    \
-        -no_qc_view     \
-        -no_cmd_out
+        cd "$subj_session_anat_dir" || exit
 
-    # deface scan
-    @afni_refacer_run \
-        -input sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp.nii.gz \
-        -mode_deface \
-        -no_images \
-        -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz
+        # axialize t1 nifti
+        fat_proc_axialize_anat                                                  \
+            -inset   sub-"${subj}"_ses-clinical${ses_suffix}_T1w.nii.gz           \
+            -refset  ${files_dir}/TT_N27+tlrc                 \
+            -prefix  sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp    \
+            -mode_t1w         							             \
+            -extra_al_inps "-nomask"					             \
+            -focus_by_ss    \
+            -no_qc_view     \
+            -no_cmd_out
 
-    # clean directory
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T1w.nii.gz "$subj_source_anat_dir"
-    mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz
-    rm sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp_12dof.param.1D
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz "$subj_source_anat_dir"
+        # deface scan
+        @afni_refacer_run \
+            -input sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp.nii.gz \
+            -mode_deface \
+            -no_images \
+            -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz
+
+        # clean directory
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T1w.nii.gz "$subj_source_anat_dir"
+        mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz
+        rm sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w_temp_12dof.param.1D
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz "$subj_source_anat_dir"
+    else
+        echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} T1 conversion failed. ++\033[0m"
+    fi
+fi
+
+if [[ -d "${subj_raw_clinical_dir}"/t2 ]] && [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
+    echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
 fi
 
 # anat t2 dicom to nifti
 if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz ]] && [[ -d "${subj_raw_clinical_dir}"/t2 ]]; then
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-clinical${ses_suffix}_T2w "${subj_raw_clinical_dir}"/t2
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T2w.json "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.json
 
-    cd "$subj_session_anat_dir" || exit
+    # check that conversion worked
+    if [[ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T2w.json ]]; then
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_T2w.json "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.json
 
-    3dAllineate \
-        -base sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz	\
-        -master sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz \
-        -input sub-"${subj}"_ses-clinical${ses_suffix}_T2w.nii.gz \
-        -cost lpc \
-        -source_automask \
-        -cmass \
-        -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz
+        cd "$subj_session_anat_dir" || exit
 
-    3dcalc \
-        -a "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
-        -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz     \
-        -expr 'iszero(a)*b' \
-        -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz
+        3dAllineate \
+            -base sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz	\
+            -master sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz \
+            -input sub-"${subj}"_ses-clinical${ses_suffix}_T2w.nii.gz \
+            -cost lpc \
+            -source_automask \
+            -cmass \
+            -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz
 
-    # clean directory
-    mv sub-"${subj}"_ses-clinical${ses_suffix}_T2w.nii.gz "$subj_source_anat_dir"
-    mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz
+        3dcalc \
+            -a "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+            -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz     \
+            -expr 'iszero(a)*b' \
+            -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz
+
+        # clean directory
+        mv sub-"${subj}"_ses-clinical${ses_suffix}_T2w.nii.gz "$subj_source_anat_dir"
+        mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T2w.nii.gz
+    else
+        echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} T2 conversion failed. ++\033[0m"
+    fi
+fi
+
+if [[ -d "${subj_raw_clinical_dir}"/flair ]] && [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz ]]; then
+    echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} FLAIR will not be converted to BIDS because T1 conversion failed. ++\033[0m"
 fi
 
 # anat flair dicom to nifti
 if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz ]] && [[ -d "${subj_raw_clinical_dir}"/flair ]]; then
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR "${subj_raw_clinical_dir}"/flair
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.json "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.json
 
-    cd "$subj_session_anat_dir" || exit
+    # check that conversion worked
+    if [[ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.json ]]; then
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.json "$subj_session_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.json
 
-    3dAllineate \
-        -base sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz	\
-        -master sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz \
-        -input sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.nii.gz \
-        -cost nmi \
-        -source_automask \
-        -cmass \
-        -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz
+        cd "$subj_session_anat_dir" || exit
 
-    3dcalc \
-        -a "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
-        -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz     \
-        -expr 'iszero(a)*b' \
-        -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
+        3dAllineate \
+            -base sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz	\
+            -master sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.nii.gz \
+            -input sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.nii.gz \
+            -cost nmi \
+            -source_automask \
+            -cmass \
+            -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz
 
-    # clean directory
-    mv sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.nii.gz "$subj_source_anat_dir"
-    mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
+        3dcalc \
+            -a "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+            -b sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz     \
+            -expr 'iszero(a)*b' \
+            -prefix sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
+
+        # clean directory
+        mv sub-"${subj}"_ses-clinical${ses_suffix}_FLAIR.nii.gz "$subj_source_anat_dir"
+        mv sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-clinical${ses_suffix}_rec-axialized_FLAIR.nii.gz
+    else
+        echo -e "\033[0;35m++ $subj ses-clinical${ses_suffix} FLAIR conversion failed. ++\033[0m"
+    fi
 fi

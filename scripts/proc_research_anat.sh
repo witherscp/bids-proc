@@ -51,16 +51,30 @@ if [ ! -d $subj_source_anat_dir ]; then
     mkdir -p $subj_source_anat_dir
 fi
 
+# set defaults
+t1_raw_folder=''
+t2_raw_folder=''
 
-if [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_pure ]] || [[ -d "${raw_session_dir}"/t2fatsat_17mm ]]; then
+# check for t1 paths
+if [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_pure ]]; then
     t1_raw_folder=anat_t1w_mp_rage_1mm_pure
     t1_raw_suffix=""
-    t2_raw_folder=t2fatsat_17mm
-elif [[ -d "${raw_session_dir}"/t1_memprage-e02 ]] || [[ -d "${raw_session_dir}"/t2_ax_fatsat_1mm ]]; then
+elif [[ -d "${raw_session_dir}"/anat_t1w_mp_rage_1mm_abcd ]]; then
+    t1_raw_folder=anat_t1w_mp_rage_1mm_abcd
+    t1_raw_suffix=""
+elif [[ -d "${raw_session_dir}"/t1_memprage-e02 ]]; then
     t1_raw_folder=t1_memprage-e02
     t1_raw_suffix=_e2
+fi
+
+# check for t2 paths
+if [[ -d "${raw_session_dir}"/t2fatsat_17mm ]]; then
+    t2_raw_folder=t2fatsat_17mm
+elif [[ -d "${raw_session_dir}"/t2_ax_fatsat_1mm ]]; then
     t2_raw_folder=t2_ax_fatsat_1mm
-else
+fi
+
+if [[ $t1_raw_folder == '' ]] && [[ $t2_raw_folder == '' ]]; then
     echo -e "\033[0;35m++ $subj does not have any recognized t1 or t2 directory in $raw_session_dir Exiting... ++\033[0m"
     exit 1
 fi
@@ -69,59 +83,76 @@ fi
 if [ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz ]; then
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_T1w "${raw_session_dir}"/"$t1_raw_folder"
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".json "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.json
 
-    cd "$subj_session_anat_dir" || exit
+    # check that conversion worked
+    if [[ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".json ]]; then
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".json "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.json
 
-    # axialize t1 nifti
-    fat_proc_axialize_anat                                                  \
-        -inset   sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".nii.gz           \
-        -refset  ${files_dir}/TT_N27+tlrc                 \
-        -prefix  sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp    \
-        -mode_t1w         							             \
-        -extra_al_inps "-nomask"					             \
-        -focus_by_ss    \
-        -no_qc_view     \
-        -no_cmd_out
+        cd "$subj_session_anat_dir" || exit
 
-    # deface scan
-    @afni_refacer_run \
-        -input sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp.nii.gz \
-        -mode_deface \
-        -no_images \
-        -prefix sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz
+        # axialize t1 nifti
+        fat_proc_axialize_anat                                                  \
+            -inset   sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".nii.gz           \
+            -refset  ${files_dir}/TT_N27+tlrc                 \
+            -prefix  sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp    \
+            -mode_t1w         							             \
+            -extra_al_inps "-nomask"					             \
+            -focus_by_ss    \
+            -no_qc_view     \
+            -no_cmd_out
 
-    # clean directory
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w.nii.gz
-    mv sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz
-    rm sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp_12dof.param.1D
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz "$subj_source_anat_dir"
+        # deface scan
+        @afni_refacer_run \
+            -input sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp.nii.gz \
+            -mode_deface \
+            -no_images \
+            -prefix sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz
+
+        # clean directory
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w"${t1_raw_suffix}".nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_T1w.nii.gz
+        mv sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz
+        rm sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w_temp_12dof.param.1D
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz "$subj_source_anat_dir"
+    else
+        echo -e "\033[0;35m++ $subj ses-research${ses_suffix} T1 conversion failed. ++\033[0m"
+    fi
+fi
+
+if [[ ! -f "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz ]] && [[ $t2_raw_folder != '' ]]; then
+    echo -e "\033[0;35m++ $subj ses-research${ses_suffix} T2 will not be converted to BIDS because T1 conversion failed. ++\033[0m"
+    exit 1
 fi
 
 # anat t2_fatsat dicom to nifti
 if [[ ! -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz ]] && [[ -d "${raw_session_dir}"/"$t2_raw_folder" ]]; then
     # convert dicom to nifti
     dcm2niix_afni -o "$subj_session_anat_dir" -z y -f sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w "${raw_session_dir}"/"${t2_raw_folder}"
-    mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.json "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.json
 
-    cd "$subj_session_anat_dir" || exit
+    # check that conversion worked
+    if [[ -f "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.json ]]; then
+        mv "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.json "$subj_session_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.json
 
-    3dAllineate \
-        -base sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz	\
-        -master sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz \
-        -input sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.nii.gz \
-        -cost lpc \
-        -source_automask \
-        -cmass \
-        -prefix sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz
+        cd "$subj_session_anat_dir" || exit
 
-    3dcalc \
-        -a "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
-        -b sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz     \
-        -expr 'iszero(a)*b' \
-        -prefix sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz
+        3dAllineate \
+            -base sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz	\
+            -master sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.nii.gz \
+            -input sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.nii.gz \
+            -cost lpc \
+            -source_automask \
+            -cmass \
+            -prefix sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz
 
-    # clean directory
-    mv sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.nii.gz "$subj_source_anat_dir"
-    mv sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz
+        3dcalc \
+            -a "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_rec-axialized_T1w.face.nii.gz   \
+            -b sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz     \
+            -expr 'iszero(a)*b' \
+            -prefix sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz
+
+        # clean directory
+        mv sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_T2w.nii.gz "$subj_source_anat_dir"
+        mv sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w_temp.nii.gz "$subj_source_anat_dir"/sub-"${subj}"_ses-research${ses_suffix}_acq-fatsat_rec-axialized_T2w.nii.gz
+    else
+        echo -e "\033[0;35m++ $subj ses-research${ses_suffix} T2 conversion failed. ++\033[0m"
+    fi
 fi
