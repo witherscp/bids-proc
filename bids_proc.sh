@@ -94,10 +94,13 @@ if [ "$cmd_output" == '' ]; then
 fi
 
 if [[ $proc_research == 'true' ]]; then
-    cmd_output=$(conda list | grep dcm2niix)
+    cmd_output=$(pip list | grep dcm2niix)
     if [ "$cmd_output" == '' ]; then
-        echo -e "\033[0;35m++ Dcm2niix not found. Run \`pip install dcm2niix\` in your mne environment. Exiting... ++\033[0m"
-        exit 1
+        cmd_output=$(conda list | grep dcm2niix)
+        if [ "$cmd_output" == '' ]; then
+            echo -e "\033[0;35m++ Dcm2niix not found. Run \`pip install dcm2niix\` in your mne environment. Exiting... ++\033[0m"
+            exit 1
+        fi
     fi
 fi
 
