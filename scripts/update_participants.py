@@ -8,12 +8,22 @@ Created on Fri Apr 28 2023
 
 from argparse import ArgumentParser
 from pathlib import Path
+import sys
 
 import pandas as pd
 
 from colors import Colors
 
-neu_dir = Path("/Volumes/shares/NEU")
+# check OS
+if sys.platform == "darwin":
+    neu_dir = Path("/Volumes/Shares/NEU")
+elif sys.platform == "linux":
+    neu_dir = Path("/shares/NEU")
+else:
+    print(Colors.RED, f"++ Unrecognized OS '{sys.platform}'; please run on ",
+          "either linux or Mac OS ++", Colors.END)
+    sys.exit()
+
 bids_root = neu_dir / 'Data'
 
 def add_session_to_dict(session, new_dict, old_dict):
