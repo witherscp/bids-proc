@@ -113,7 +113,7 @@ anat_dir=$bids_root/sub-$subj/ses-$session/anat
 
 if [ -d "${subj_fs_dir}" ]; then
 	echo -e "\033[0;35m++ Freesurfer has already been run. Please delete to rerun. ++\033[0m"
-else
+elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]] && [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T2w.nii.gz  ]]; then
 	recon-all \
 		-s sub-"${subj}"_ses-$session \
 		-sd $fs_dir \
@@ -121,5 +121,14 @@ else
 		-i "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz \
 		-T2 "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T2w.nii.gz \
 		-T2pial \
+		-contrasurfreg
+elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]] && [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_FLAIR.nii.gz  ]]; then
+	recon-all \
+		-s sub-"${subj}"_ses-$session \
+		-sd $fs_dir \
+		-all \
+		-i "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz \
+		-FLAIR "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_FLAIR.nii.gz \
+		-FLAIRpial \
 		-contrasurfreg
 fi
