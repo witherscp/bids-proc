@@ -95,7 +95,7 @@ for subj in "${subj_arr[@]}"; do
 
     qc_output_file="$subj_qc_dir"/qc_output.txt
     if [[ -f $qc_output_file ]]; then
-        echo -e "\033[0;35m++ Registration QC has already been run on $subj. Do you want to run again and overwrite the previous results? Enter y if correct and n if not. ++\033[0m"
+        echo -e "\033[0;35m++ Registration QC has already been run on $subj. Do you want to run again and overwrite the previous results? Enter y if yes and n if no. ++\033[0m"
         read -r ynresponse
         ynresponse=$(echo "$ynresponse" | tr '[:upper:]' '[:lower:]')
 
