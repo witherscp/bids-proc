@@ -95,7 +95,7 @@ else
     done
 	
 	if [[ $ses_status == 'success' ]]; then
-		echo -e "\033[0;32m++ Subject registration was a success. Continuing with Freesurfer... ++\033[0m"
+		echo -e "\033[0;32m++ Subject registration was a success. ++\033[0m"
 	elif [[ $ses_status == 'failure' ]]; then
 		echo -e "\033[0;35m++ $subj registration failed for ses-$session. Please fix registration before running Freesurfer. Exiting... ++\033[0m"
     	exit 1
@@ -114,6 +114,7 @@ anat_dir=$bids_root/sub-$subj/ses-$session/anat
 if [ -d "${subj_fs_dir}" ]; then
 	echo -e "\033[0;35m++ Freesurfer has already been run. Please delete to rerun. ++\033[0m"
 elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]] && [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T2w.nii.gz  ]]; then
+	echo -e "\033[0;32m++ Running Freesurfer with T1 and T2 images. ++\033[0m"
 	recon-all \
 		-s sub-"${subj}"_ses-$session \
 		-sd $fs_dir \
@@ -123,6 +124,7 @@ elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]
 		-T2pial \
 		-contrasurfreg
 elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]] && [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_FLAIR.nii.gz  ]]; then
+	echo -e "\033[0;32m++ Running Freesurfer with T1 and FLAIR images. ++\033[0m"
 	recon-all \
 		-s sub-"${subj}"_ses-$session \
 		-sd $fs_dir \
@@ -130,5 +132,13 @@ elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]
 		-i "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz \
 		-FLAIR "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_FLAIR.nii.gz \
 		-FLAIRpial \
+		-contrasurfreg
+elif [[ -f "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz ]]; then
+	echo -e "\033[0;32m++ Running Freesurfer with T1 image only. ++\033[0m"
+	recon-all \
+		-s sub-"${subj}"_ses-$session \
+		-sd $fs_dir \
+		-all \
+		-i "${anat_dir}"/sub-"${subj}"_ses-${session}_rec-axialized_T1w.nii.gz \
 		-contrasurfreg
 fi
