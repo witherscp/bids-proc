@@ -93,14 +93,17 @@ if [ "$cmd_output" == '' ]; then
 	exit 1
 fi
 
+cmd_output=$(which dcm2niix)
+if [ "$cmd_output" == '' ]; then
+	echo -e "\033[0;35m++ Dcm2niix not found. Exiting... ++\033[0m"
+	exit 1
+fi
+
 if [[ $proc_research == 'true' ]]; then
-    cmd_output=$(pip list | grep dcm2niix)
+    cmd_output=$(pip list | grep pydicom)
     if [ "$cmd_output" == '' ]; then
-        cmd_output=$(conda list | grep dcm2niix)
-        if [ "$cmd_output" == '' ]; then
-            echo -e "\033[0;35m++ Dcm2niix not found. Run \`pip install dcm2niix\` in your mne environment. Exiting... ++\033[0m"
-            exit 1
-        fi
+        echo -e "\033[0;35m++ Pydicom not found. Run \`pip install pydicom\` in your mne environment. Exiting... ++\033[0m"
+        exit 1
     fi
 fi
 
